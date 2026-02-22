@@ -1,0 +1,6 @@
+FROM alpine:latest
+RUN apk add --no-cache g++
+WORKDIR /app
+COPY snowflake.cpp .
+RUN g++ -o snowflake snowflake.cpp
+CMD ["./snowflake"]
