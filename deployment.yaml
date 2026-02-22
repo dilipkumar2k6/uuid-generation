@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uuid-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uuid-generator
+  template:
+    metadata:
+      labels:
+        app: uuid-generator
+    spec:
+      containers:
+      - name: app
+        image: uuid-app:latest
+        imagePullPolicy: Never
+      - name: snowflake
+        image: uuid-snowflake:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
