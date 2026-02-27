@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spanner
+  template:
+    metadata:
+      labels:
+        app: spanner
+    spec:
+      containers:
+      - name: spanner
+        image: gcr.io/cloud-spanner-emulator/emulator:latest
+        ports:
+        - containerPort: 9010
+          name: grpc
+        - containerPort: 9020
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spanner
+spec:
+  ports:
+  - port: 9010
+    name: grpc
+  - port: 9020
+    name: http
+  selector:
+    app: spanner
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spanner-init
+spec:
+  template:
+    spec:
+      containers:
+      - name: spanner-init
+        image: google/cloud-sdk:latest
+        env:
+        - name: SPANNER_EMULATOR_HOST
+          value: spanner:9010
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "Waiting for Spanner emulator to start..."
+          sleep 5
+          echo "Configuring gcloud for emulator..."
+          gcloud config set auth/disable_credentials true
+          gcloud config set project test-project
+          gcloud config set api_endpoint_overrides/spanner http://spanner:9020/
+          echo "Creating instance..."
+          gcloud spanner instances create test-instance --config=emulator-config --description="Test Instance" --nodes=1
+          echo "Creating database and sequence..."
+          gcloud spanner databases create test-db --instance=test-instance --ddl="CREATE SEQUENCE uuid_sequence OPTIONS (sequence_kind='bit_reversed_positive');"
+          echo "Initialization complete."
+      restartPolicy: OnFailure

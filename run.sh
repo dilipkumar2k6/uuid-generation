@@ -4,8 +4,21 @@ set -e
 
 CLUSTER_NAME="uuid-test-cluster"
 
+# Default generator algorithm
+ID_GENERATOR_ALGO="SNOWFLAKE"
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --id_generator_algo) ID_GENERATOR_ALGO="$2"; shift ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
 echo "========================================"
 echo "  Billion-Scale UUID Generator Setup  "
+echo "  Generator Type: $ID_GENERATOR_ALGO"
 echo "========================================"
 
 # 1. Install kind if missing
@@ -40,8 +53,54 @@ kind load docker-image uuid-app:latest --name "$CLUSTER_NAME"
 kind load docker-image uuid-snowflake:latest --name "$CLUSTER_NAME"
 
 # 6. Deploy to Kubernetes
-echo "[+] Deploying to Kubernetes..."
-kubectl apply -f deployment.yaml
+echo "[+] Deploying to Kubernetes with GENERATOR_TYPE=$ID_GENERATOR_ALGO..."
+
+# If using DB_AUTO_INC, deploy the database tier first
+if [ "$ID_GENERATOR_ALGO" = "DB_AUTO_INC" ]; then
+    echo "[+] Deploying Database Auto-Increment tier (MySQL + ProxySQL)..."
+    kubectl apply -f lib/db-auto-inc/mysql-deployment.yaml
+    kubectl apply -f lib/db-auto-inc/proxysql-deployment.yaml
+    
+    echo "[+] Waiting for database tier to become ready..."
+    kubectl wait --for=condition=available --timeout=120s deployment/mysql1
+    kubectl wait --for=condition=available --timeout=120s deployment/mysql2
+    kubectl wait --for=condition=available --timeout=120s deployment/proxysql
+fi
+
+# If using DUAL_BUFFER, deploy the dual-buffer database tier first
+if [ "$ID_GENERATOR_ALGO" = "DUAL_BUFFER" ]; then
+    echo "[+] Deploying Dual Buffer database tier (MySQL)..."
+    kubectl apply -f lib/dual-buffer/mysql-deployment.yaml
+    
+    echo "[+] Waiting for database tier to become ready..."
+    kubectl wait --for=condition=available --timeout=120s deployment/mysql-dual-buffer
+fi
+
+# If using ETCD_SNOWFLAKE, deploy the etcd tier first
+if [ "$ID_GENERATOR_ALGO" = "ETCD_SNOWFLAKE" ]; then
+    echo "[+] Deploying Etcd tier..."
+    kubectl apply -f lib/etcd-snowflake/etcd-deployment.yaml
+    
+    echo "[+] Waiting for etcd to become ready..."
+    kubectl wait --for=condition=available --timeout=120s deployment/etcd
+fi
+
+# If using SPANNER, deploy the Spanner emulator tier first
+if [ "$ID_GENERATOR_ALGO" = "SPANNER" ]; then
+    echo "[+] Deploying Spanner Emulator tier..."
+    kubectl apply -f lib/spanner/spanner-deployment.yaml
+    
+    echo "[+] Waiting for Spanner Emulator to become ready..."
+    kubectl wait --for=condition=available --timeout=120s deployment/spanner
+    
+    echo "[+] Waiting for Spanner initialization job to complete..."
+    kubectl wait --for=condition=complete --timeout=300s job/spanner-init
+fi
+
+# Create a temporary deployment file with the correct generator type
+sed "s/value: \"SNOWFLAKE\"/value: \"$ID_GENERATOR_ALGO\"/g" deployment.yaml > deployment_tmp.yaml
+kubectl apply -f deployment_tmp.yaml
+rm deployment_tmp.yaml
 
 # 7. Wait for Pod to be ready
 echo "[+] Waiting for Pod to be ready..."

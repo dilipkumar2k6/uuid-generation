@@ -1,6 +1,18 @@
-FROM alpine:latest
-RUN apk add --no-cache g++
+FROM ubuntu:22.04
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y g++ libmysqlclient-dev libcurl4-openssl-dev
 WORKDIR /app
-COPY snowflake.cpp .
-RUN g++ -o snowflake snowflake.cpp
+COPY id_generator.cpp .
+COPY lib/snowflake/ lib/snowflake/
+COPY lib/hlc-snowflake/ lib/hlc-snowflake/
+COPY lib/insta-snowflake/ lib/insta-snowflake/
+COPY lib/sonyflake/ lib/sonyflake/
+COPY lib/uuidv4/ lib/uuidv4/
+COPY lib/uuidv7/ lib/uuidv7/
+COPY lib/db-auto-inc/ lib/db-auto-inc/
+COPY lib/dual-buffer/ lib/dual-buffer/
+COPY lib/etcd-snowflake/ lib/etcd-snowflake/
+COPY lib/spanner/ lib/spanner/
+COPY lib/id_generator.h lib/id_generator.h
+COPY lib/network_util.h lib/network_util.h
+RUN g++ -o snowflake id_generator.cpp lib/snowflake/snowflake.cpp lib/hlc-snowflake/hlc_snowflake.cpp lib/insta-snowflake/insta_snowflake.cpp lib/sonyflake/sonyflake.cpp lib/uuidv4/uuidv4_generator.cpp lib/uuidv7/uuidv7_generator.cpp lib/db-auto-inc/db_auto_inc.cpp lib/dual-buffer/dual_buffer.cpp lib/etcd-snowflake/etcd_snowflake.cpp lib/spanner/spanner_generator.cpp -lmysqlclient -lcurl -pthread
 CMD ["./snowflake"]

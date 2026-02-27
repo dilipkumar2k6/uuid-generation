@@ -19,5 +19,8 @@ spec:
       - name: snowflake
         image: uuid-snowflake:latest
         imagePullPolicy: Never
+        env:
+        - name: GENERATOR_TYPE
+          value: "SNOWFLAKE"
         ports:
         - containerPort: 8080

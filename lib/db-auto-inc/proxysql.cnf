@@ -1,0 +1,10 @@
+mysql_servers =
+(
+  { address="mysql1" , port=3306 , hostgroup=1, max_connections=200 },
+  { address="mysql2" , port=3306 , hostgroup=1, max_connections=200 }
+)
+
+mysql_users =
+(
+  { username="root" , password="root" , default_hostgroup=1 }
+)
