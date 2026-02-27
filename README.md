@@ -2,6 +2,7 @@
 
 This project implements a high-performance, billion-scale UUID generator using a Snowflake sidecar pattern, as described in the architectural recommendation for a billion-scale system at https://dilipkumar.medium.com/design-a-system-to-generate-a-unique-id-1517dc624975.
 
+
 ## Architecture
 
 ```text
