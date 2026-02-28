@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spanner
+  name: spanner-truetime
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spanner
+      app: spanner-truetime
   template:
     metadata:
       labels:
-        app: spanner
+        app: spanner-truetime
     spec:
       containers:
-      - name: spanner
+      - name: spanner-truetime
         image: gcr.io/cloud-spanner-emulator/emulator:latest
         ports:
         - containerPort: 9010
@@ -32,17 +32,17 @@ spec:
   - port: 9020
     name: http
   selector:
-    app: spanner
+    app: spanner-truetime
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: spanner-init
+  name: spanner-truetime-init
 spec:
   template:
     spec:
       containers:
-      - name: spanner-init
+      - name: spanner-truetime-init
         image: curlimages/curl:latest
         command: ["/bin/sh", "-c"]
         args:
@@ -53,9 +53,9 @@ spec:
           curl -s -X POST http://spanner:9020/v1/projects/test-project/instances \
             -H "Content-Type: application/json" \
             -d '{"instanceId": "test-instance", "instance": {"config": "emulator-config", "displayName": "Test Instance", "nodeCount": 1}}'
-          echo "\nCreating database and sequence..."
+          echo "\nCreating database..."
           curl -s -X POST http://spanner:9020/v1/projects/test-project/instances/test-instance/databases \
             -H "Content-Type: application/json" \
-            -d '{"createStatement": "CREATE DATABASE `test-db`", "extraStatements": ["CREATE SEQUENCE uuid_sequence OPTIONS (sequence_kind=\"bit_reversed_positive\")"]}'
+            -d '{"createStatement": "CREATE DATABASE `test-db`"}'
           echo "\nInitialization complete."
       restartPolicy: OnFailure

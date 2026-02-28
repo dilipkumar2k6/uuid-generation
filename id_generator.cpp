@@ -18,6 +18,7 @@
 #include "lib/dual-buffer/dual_buffer.h"
 #include "lib/etcd-snowflake/etcd_snowflake.h"
 #include "lib/spanner/spanner_generator.h"
+#include "lib/spanner-truetime/spanner_truetime_generator.h"
 
 using namespace std;
 
@@ -64,6 +65,9 @@ int main() {
     } else if (gen_type == "SPANNER") {
         cout << "Initializing Spanner Sequence generator..." << endl;
         generator = make_unique<SpannerGenerator>();
+    } else if (gen_type == "SPANNER_TRUETIME") {
+        cout << "Initializing Spanner TrueTime generator..." << endl;
+        generator = make_unique<SpannerTrueTimeGenerator>();
     } else {
         cout << "Initializing Standard Snowflake generator..." << endl;
         generator = make_unique<Snowflake>();

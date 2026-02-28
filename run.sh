@@ -97,6 +97,18 @@ if [ "$ID_GENERATOR_ALGO" = "SPANNER" ]; then
     kubectl wait --for=condition=complete --timeout=300s job/spanner-init
 fi
 
+# If using SPANNER_TRUETIME, deploy the Spanner TrueTime emulator tier first
+if [ "$ID_GENERATOR_ALGO" = "SPANNER_TRUETIME" ]; then
+    echo "[+] Deploying Spanner TrueTime Emulator tier..."
+    kubectl apply -f lib/spanner-truetime/spanner-truetime-deployment.yaml
+    
+    echo "[+] Waiting for Spanner Emulator to become ready..."
+    kubectl wait --for=condition=available --timeout=120s deployment/spanner-truetime
+    
+    echo "[+] Waiting for Spanner initialization job to complete..."
+    kubectl wait --for=condition=complete --timeout=300s job/spanner-truetime-init
+fi
+
 # Create a temporary deployment file with the correct generator type
 sed "s/value: \"SNOWFLAKE\"/value: \"$ID_GENERATOR_ALGO\"/g" deployment.yaml > deployment_tmp.yaml
 kubectl apply -f deployment_tmp.yaml

@@ -14,17 +14,14 @@ The 64-bit ID structure is distributed as follows:
 
 *Note: The order of bits in Sonyflake is typically Time -> Sequence -> Machine ID, unlike standard Snowflake which is Time -> Node ID -> Sequence.*
 
+## Component Diagram
+
+This diagram shows the sidecar architecture for the Sonyflake generator.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+---------------------------------------------------------------+
-|                   64-bit Sonyflake ID                         |
-+---+---------------------------------------+--------+----------+
-| 1 |                39 bits                | 8 bits | 16 bits  |
-|bit|               Timestamp               |Sequence|Machine ID|
-| 0 |       (10ms units since epoch)        |        |          |
-+---+---------------------------------------+--------+----------+
-```
 
 ## Why change the bit distribution?
 
@@ -43,6 +40,18 @@ To make room for the longer lifespan and more machines, the sequence is reduced 
 - **Machine ID Derivation**: This sidecar derives its Machine ID dynamically from the last 16 bits of the container's IPv4 address.
 - **Thread Safety**: The sequence and timestamp are managed using `std::atomic<uint64_t>` to ensure thread-safe, lock-free ID generation.
 - **Clock Skew**: Like the standard Snowflake, this implementation uses a "fail-fast" spin-wait approach if the physical clock moves backwards.
+
+## Flow Diagram
+
+This flowchart explains the Sonyflake algorithm, emphasizing the use of 10ms time units and the specific bit distribution for the Machine ID and sequence.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram outlines the request flow and the bitwise operations used to construct the final Sonyflake ID.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

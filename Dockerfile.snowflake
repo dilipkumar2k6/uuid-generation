@@ -12,7 +12,8 @@ COPY lib/db-auto-inc/ lib/db-auto-inc/
 COPY lib/dual-buffer/ lib/dual-buffer/
 COPY lib/etcd-snowflake/ lib/etcd-snowflake/
 COPY lib/spanner/ lib/spanner/
+COPY lib/spanner-truetime/ lib/spanner-truetime/
 COPY lib/id_generator.h lib/id_generator.h
 COPY lib/network_util.h lib/network_util.h
-RUN g++ -o snowflake id_generator.cpp lib/snowflake/snowflake.cpp lib/hlc-snowflake/hlc_snowflake.cpp lib/insta-snowflake/insta_snowflake.cpp lib/sonyflake/sonyflake.cpp lib/uuidv4/uuidv4_generator.cpp lib/uuidv7/uuidv7_generator.cpp lib/db-auto-inc/db_auto_inc.cpp lib/dual-buffer/dual_buffer.cpp lib/etcd-snowflake/etcd_snowflake.cpp lib/spanner/spanner_generator.cpp -lmysqlclient -lcurl -pthread
+RUN g++ -o snowflake id_generator.cpp lib/snowflake/snowflake.cpp lib/hlc-snowflake/hlc_snowflake.cpp lib/insta-snowflake/insta_snowflake.cpp lib/sonyflake/sonyflake.cpp lib/uuidv4/uuidv4_generator.cpp lib/uuidv7/uuidv7_generator.cpp lib/db-auto-inc/db_auto_inc.cpp lib/dual-buffer/dual_buffer.cpp lib/etcd-snowflake/etcd_snowflake.cpp lib/spanner/spanner_generator.cpp lib/spanner-truetime/spanner_truetime_generator.cpp -lmysqlclient -lcurl -pthread
 CMD ["./snowflake"]

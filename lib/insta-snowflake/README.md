@@ -12,17 +12,14 @@ The 64-bit ID structure is distributed as follows:
 - **13 bits**: Logical Shard ID.
 - **10 bits**: Sequence number.
 
+## Component Diagram
+
+This diagram shows the sidecar architecture for the Instagram Snowflake generator.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+---------------------------------------------------------------+
-|               64-bit Instagram Snowflake ID                   |
-+---+---------------------------------------+----------+--------+
-| 1 |                41 bits                | 13 bits  | 10 bits|
-|bit|               Timestamp               | Shard ID |Sequence|
-| 0 |        (ms since custom epoch)        |          |        |
-+---+---------------------------------------+----------+--------+
-```
 
 ## Why change the bit distribution?
 
@@ -37,6 +34,18 @@ To make room for the extra shard bits, the sequence is reduced from 12 bits to 1
 - **Shard ID Derivation**: Similar to the standard Snowflake implementation, this sidecar derives its Shard ID dynamically from the last 13 bits of the container's IPv4 address. In a real-world PostgreSQL environment, this might be replaced by the actual logical schema ID the application is currently writing to.
 - **Thread Safety**: The sequence and timestamp are managed using `std::atomic<uint64_t>` to ensure thread-safe, lock-free ID generation.
 - **Clock Skew**: Like the standard Snowflake, this implementation uses a "fail-fast" spin-wait approach if the physical clock moves backwards.
+
+## Flow Diagram
+
+This flowchart details the Instagram-specific Snowflake logic, highlighting the use of a custom epoch and the integration of a Shard ID.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram illustrates the ID generation process, showing how the timestamp, Shard ID, and sequence are combined.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

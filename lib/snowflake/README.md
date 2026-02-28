@@ -4,15 +4,13 @@ This directory contains the core C++ implementation of the Snowflake ID generati
 
 ## Design
 
-```text
-+---------------------------------------------------------------+
-|                   64-bit Snowflake ID                         |
-+---+---------------------------------------+----------+--------+
-| 1 |                41 bits                | 10 bits  | 12 bits|
-|bit|               Timestamp               | Node ID  |Sequence|
-| 0 |        (ms since custom epoch)        |          |        |
-+---+---------------------------------------+----------+--------+
-```
+## Component Diagram
+
+This diagram shows the basic sidecar architecture where the application container requests IDs from the Snowflake sidecar over local TCP.
+
+![Component Diagram](component-diagram.svg)
+
+## The 64-bit ID Structure
 
 ## The 64-bit ID Structure
 
@@ -22,6 +20,12 @@ A standard Snowflake ID is composed of 64 bits, distributed as follows:
 - **41 bits**: Timestamp (milliseconds since a custom epoch).
 - **10 bits**: Node/Machine ID (allows for up to 1024 unique nodes).
 - **12 bits**: Sequence number (allows for up to 4096 IDs per millisecond per node).
+
+## Flow Diagram
+
+This flowchart details the standard Snowflake algorithm's logic, including timestamp retrieval, clock backwards protection, and sequence incrementing within the same millisecond.
+
+![Flow Diagram](flow-diagram.svg)
 
 ## Implementation Choices Explained
 
@@ -85,6 +89,12 @@ While a traditional mutex lock (`std::lock_guard`) could also ensure thread safe
 1.  **Performance (Lock-Free)**: `std::atomic` operations (like `fetch_add` and `load`/`store`) typically compile down to single, lock-free CPU instructions (e.g., `LOCK XADD` on x86). This avoids the heavy overhead of context switching and OS-level thread blocking that occurs when threads contend for a mutex.
 2.  **High Throughput**: In a high-concurrency environment where thousands of IDs are generated per millisecond, a mutex would become a severe bottleneck (lock contention). `std::atomic` allows multiple threads to increment the sequence concurrently with minimal performance degradation.
 3.  **Simplicity**: It avoids potential deadlocks and makes the code cleaner without needing explicit lock/unlock blocks.
+
+## Sequence Diagram
+
+This sequence diagram illustrates the interaction flow for generating a Snowflake ID, highlighting the lock-free sequence management and bitwise operations.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

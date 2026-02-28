@@ -2,39 +2,14 @@
 
 This project implements a high-performance, billion-scale UUID generator using a Snowflake sidecar pattern. It is based on the architectural recommendations for a billion-scale system detailed in [this article](https://dilipkumar.medium.com/design-a-system-to-generate-a-unique-id-1517dc624975).
 
+## Component Diagram
+
+This diagram illustrates the overall architecture, showing how the application container communicates with the ID generator sidecar via localhost IPC, and how the sidecar optionally connects to external dependencies based on the chosen algorithm.
+
+![Component Diagram](component-diagram.svg)
 
 ## Architecture
 
-```text
-+---------------------------------------------------------------------------------+
-|                              Kubernetes Pod                                     |
-|                                                                                 |
-|  +-------------------------+                       +-------------------------+  |
-|  |                         |                       |                         |  |
-|  |      App Container      |                       |    Snowflake Sidecar    |  |
-|  |      (app.cpp)          |                       |    (id_generator.cpp)   |  |
-|  |                         |                       |                         |  |
-|  |   [Consumer]            |                       |   [Generator]           |  |
-|  |   - Spawns 5 threads    | <--- Localhost IPC --->   - Listens on port 8080|  |
-|  |   - Requests UUIDs      |      (TCP port 8080)  |   - Selects Algorithm   |  |
-|  |   - Prints to stdout    |                       |   - Generates 64/128-bit|  |
-|  |                         |                       |     ID                  |  |
-|  +-------------------------+                       +-------------------------+  |
-|                                                                 |               |
-+-----------------------------------------------------------------|---------------+
-                                                                  |
-                                                                  v
-                                                     +-------------------------+
-                                                     |                         |
-                                                     |  External Dependencies  |
-                                                     |  (Optional, based on    |
-                                                     |   GENERATOR_TYPE)       |
-                                                     |                         |
-                                                     |  - etcd                 |
-                                                     |  - MySQL (ProxySQL)     |
-                                                     |                         |
-                                                     +-------------------------+
-```
 
 The system consists of two main components deployed together in a single Kubernetes Pod (Sidecar pattern):
 
@@ -58,6 +33,19 @@ The sidecar supports eight different ID generation algorithms, configurable via 
 8.  **Pre-Generated Blocks & Dual Buffering** (`GENERATOR_TYPE=DUAL_BUFFER`): Meituan Leaf approach. Fetches blocks of IDs from a database and serves them from memory. Uses a background thread to fetch the next block before the current one runs out, ensuring extremely high throughput and low latency. See [`lib/dual-buffer/README.md`](lib/dual-buffer/README.md) for details.
 9.  **Etcd-Coordinated Snowflake** (`GENERATOR_TYPE=ETCD_SNOWFLAKE`): A Snowflake variant that uses `etcd` to dynamically and safely assign Node IDs, preventing collisions in containerized environments. See [`lib/etcd-snowflake/README.md`](lib/etcd-snowflake/README.md) for details.
 10. **Google Cloud Spanner Sequence** (`GENERATOR_TYPE=SPANNER`): Uses Google Cloud Spanner's native `bit_reversed_positive` sequence to generate globally unique, evenly distributed 64-bit IDs. See [`lib/spanner/README.md`](lib/spanner/README.md) for details.
+11. **Google Cloud Spanner TrueTime** (`GENERATOR_TYPE=SPANNER_TRUETIME`): Uses Google Cloud Spanner's TrueTime commit timestamps combined with a Shard ID and Transaction ID to generate globally unique, perfectly ordered string UUIDs. See [`lib/spanner-truetime/README.md`](lib/spanner-truetime/README.md) for details.
+
+## Flow Diagram
+
+This flowchart details the routing logic within the sidecar, demonstrating how it selects the appropriate ID generation algorithm based on the `GENERATOR_TYPE` environment variable.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram outlines the typical request lifecycle, including any necessary initialization with external services, and the subsequent ID generation process for each application request.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Prerequisites
 

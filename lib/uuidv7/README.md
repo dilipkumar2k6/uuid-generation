@@ -8,18 +8,14 @@ UUIDv7 is a relatively new standard designed to combine the best aspects of Snow
 
 Like UUIDv4, it is a 128-bit value formatted as a 36-character hexadecimal string (`8-4-4-4-12`). However, instead of being entirely random, the first 48 bits are a Unix timestamp in milliseconds.
 
+## Component Diagram
+
+This diagram shows the sidecar architecture for the UUIDv7 generator.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+-----------------------------------------------------------------------+
-|                          128-bit UUIDv7                               |
-+-----------------------------------+----+--------------------+----+----+
-|              48 bits              | 4  |      12 bits       | 2  | 62 |
-|             Unix Ts               |bits|    Random Data     |bits|bits|
-|     (ms since standard epoch)     |Ver |      (rand_a)      |Var |Rand|
-|                                   |(7) |                    |(10)|(b) |
-+-----------------------------------+----+--------------------+----+----+
-```
 
 ## The 128-bit Structure
 
@@ -40,6 +36,18 @@ The UUIDv7 bits are distributed as follows:
 - **Randomness**: The generator uses `std::mt19937_64` (a 64-bit Mersenne Twister pseudo-random number generator) seeded by `std::random_device` to generate the 74 bits of required randomness (`rand_a` and `rand_b`).
 - **Thread Safety**: Because `std::mt19937_64` is not thread-safe, a `std::mutex` is used to lock the random number generation step.
 - **String Output**: Like UUIDv4, this generator overrides the `next_id_string()` method of the `IdGenerator` interface to return the formatted string directly.
+
+## Flow Diagram
+
+This flowchart explains the UUIDv7 generation process, combining a 48-bit Unix timestamp with generated random data and setting the appropriate version and variant bits.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram outlines the request flow, showing the retrieval of the timestamp and the thread-safe generation of the random components.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

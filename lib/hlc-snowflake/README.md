@@ -10,17 +10,14 @@ The standard Snowflake algorithm relies heavily on the physical system clock. If
 
 Both of these approaches reduce availability. The **HLC Snowflake** solves this problem by combining physical time with a logical counter.
 
+## Component Diagram
+
+This diagram shows the sidecar architecture for the HLC Snowflake generator.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+---------------------------------------------------------------+
-|                 64-bit HLC Snowflake ID                       |
-+---+---------------------------------------+----------+--------+
-| 1 |                41 bits                | 10 bits  | 12 bits|
-|bit|          Logical Timestamp            | Node ID  |Sequence|
-| 0 | (Advances even if physical clock lags)|          |        |
-+---+---------------------------------------+----------+--------+
-```
 
 ## How it Works
 
@@ -38,6 +35,12 @@ The difference lies in how the **Timestamp** and **Sequence** are updated:
 *Advantage*: The generator never blocks and never throws an error due to clock skew. It provides extremely high availability.
 *Trade-off*: During a severe backwards clock jump or extreme burst of traffic, the generated timestamp might run slightly ahead of the actual physical clock.
 
+## Flow Diagram
+
+This flowchart explains the Hybrid Logical Clock (HLC) logic, specifically how it handles physical clock backwards movement by incrementing a logical component instead of failing.
+
+![Flow Diagram](flow-diagram.svg)
+
 ## Lock-Free Thread Safety
 
 To ensure thread safety without the performance bottleneck of mutex locks, this implementation uses a highly optimized lock-free Compare-And-Swap (CAS) loop.
@@ -51,6 +54,12 @@ std::atomic<uint64_t> state{0};
 When `next_id()` is called, multiple threads can concurrently attempt to calculate the next state (timestamp + sequence). The `compare_exchange_weak` function ensures that only one thread successfully updates the state at a time. If a thread fails (because another thread updated the state first), it simply recalculates the next state based on the new value and tries again.
 
 This lock-free approach allows for millions of IDs to be generated per second across multiple threads with minimal contention.
+
+## Sequence Diagram
+
+This sequence diagram details the lock-free Compare-And-Swap (CAS) retry loop used to safely update the HLC state across concurrent requests.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

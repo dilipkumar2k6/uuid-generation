@@ -10,26 +10,14 @@ To achieve high availability and avoid a single point of failure, the system use
 
 ## Design
 
-```text
-+-----------------------------------------------------------------------+
-|                   Database Auto-Increment Architecture                |
-+-----------------------------------------------------------------------+
-|                                                                       |
-|  +-------------+       +-------------+       +---------------------+  |
-|  |             |       |             |       |                     |  |
-|  | App/Sidecar | ----> |  ProxySQL   | ----> | MySQL Master 1      |  |
-|  |             |       |             |   /   | (Offset 1, Incr 2)  |  |
-|  +-------------+       +-------------+  /    |                     |  |
-|                                         \    +---------------------+  |
-|                                          \                            |
-|                                           \  +---------------------+  |
-|                                            \ |                     |  |
-|                                              | MySQL Master 2      |  |
-|                                              | (Offset 2, Incr 2)  |  |
-|                                              |                     |  |
-|                                              +---------------------+  |
-+-----------------------------------------------------------------------+
-```
+## Component Diagram
+
+This diagram illustrates the architecture including the application pod and the external database tier, featuring ProxySQL and multiple MySQL masters.
+
+![Component Diagram](component-diagram.svg)
+
+## Design
+
 
 ## How it Works
 
@@ -56,6 +44,18 @@ This will spin up `mysql1`, `mysql2`, and `proxysql` pods and services. The `id_
 - **MySQL Client**: The C++ code uses `libmysqlclient` to connect to ProxySQL.
 - **Thread Safety**: A `std::mutex` is used to ensure that only one thread executes the `REPLACE INTO` query on the shared MySQL connection at a time. For higher throughput, a connection pool should be implemented.
 - **Resilience**: If a query fails (e.g., ProxySQL restarts or a connection drops), the generator attempts to reconnect and retry once before failing.
+
+## Flow Diagram
+
+This flowchart details the logic of executing a `REPLACE INTO` query to leverage MySQL's auto-increment feature, including the retry mechanism for resilience.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram shows the interaction between the sidecar, ProxySQL, and the MySQL databases to fetch the `LAST_INSERT_ID()`.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

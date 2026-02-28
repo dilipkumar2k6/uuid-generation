@@ -10,25 +10,14 @@ Crucially, Spanner supports a `bit_reversed_positive` option for sequences. This
 
 ## Design
 
-```text
-+-----------------------------------------------------------------------+
-|                   Spanner Sequence Architecture                       |
-+-----------------------------------------------------------------------+
-|                                                                       |
-|  +-------------------+                 +---------------------------+  |
-|  |                   |                 |                           |  |
-|  | App/Sidecar       | -- REST API --> |   Google Cloud Spanner    |  |
-|  |                   |                 |        (or Emulator)      |  |
-|  | (Executes SQL:    |                 |                           |  |
-|  |  SELECT           |                 |   +-------------------+   |  |
-|  |  GET_NEXT_        | <--- 64-bit --- |   | SEQUENCE          |   |  |
-|  |  SEQUENCE_        |      ID         |   | uuid_sequence     |   |  |
-|  |  VALUE(...))      |                 |   | (bit_reversed_    |   |  |
-|  |                   |                 |   |  positive)        |   |  |
-|  +-------------------+                 |   +-------------------+   |  |
-|                                        +---------------------------+  |
-+-----------------------------------------------------------------------+
-```
+## Component Diagram
+
+This diagram shows the architecture where the sidecar communicates with Google Cloud Spanner via its REST API.
+
+![Component Diagram](component-diagram.svg)
+
+## Design
+
 
 ## How it Works
 
@@ -38,6 +27,18 @@ Crucially, Spanner supports a `bit_reversed_positive` option for sequences. This
     SELECT GET_NEXT_SEQUENCE_VALUE(SEQUENCE uuid_sequence)
     ```
 3.  **Parsing**: The generator parses the JSON response from the REST API to extract the 64-bit integer and returns it to the application.
+
+## Flow Diagram
+
+This flowchart details the process of executing a SQL query against Spanner's sequence object and parsing the JSON response to extract the generated ID.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram illustrates the REST API interactions, including session creation and the execution of the `GET_NEXT_SEQUENCE_VALUE` query for each request.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

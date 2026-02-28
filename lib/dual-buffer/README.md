@@ -11,36 +11,14 @@ To prevent a sudden latency spike when a block runs out and the application has 
 2.  When the primary buffer is consumed past a certain threshold (e.g., 20% remaining), a background thread asynchronously fetches the next block of IDs from the database into the secondary buffer.
 3.  When the primary buffer is exhausted, the application seamlessly swaps to the secondary buffer with zero wait time.
 
+## Component Diagram
+
+This diagram shows the architecture involving the application pod and the external MySQL database used for storing ID segments.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+-----------------------------------------------------------------------+
-|                       Dual Buffering Architecture                     |
-+-----------------------------------------------------------------------+
-|                                                                       |
-|  +-----------------------------------------------------------------+  |
-|  |                           App/Sidecar                           |  |
-|  |                                                                 |  |
-|  |  +-------------------+                 +---------------------+  |  |
-|  |  |  Primary Buffer   |                 |  Secondary Buffer   |  |  |
-|  |  | [IDs 1000 - 1999] | -- Exhausted -> | [IDs 2000 - 2999]   |  |  |
-|  |  | (Serving IDs)     |                 | (Ready/Fetching)    |  |  |
-|  |  +-------------------+                 +---------------------+  |  |
-|  |           |                                       ^             |  |
-|  |           | (Threshold reached, e.g., 20% left)   |             |  |
-|  |           v                                       |             |  |
-|  |  +-------------------------------------------------------+      |  |
-|  |  |                  Background Fetcher Thread            |      |  |
-|  |  +-------------------------------------------------------+      |  |
-|  +--------------------------------|--------------------------------+  |
-|                                   |                                   |
-|                                   v                                   |
-|  +-----------------------------------------------------------------+  |
-|  |                            Database                             |  |
-|  |                      (id_segments table)                        |  |
-|  +-----------------------------------------------------------------+  |
-+-----------------------------------------------------------------------+
-```
 
 ## Running the Database Tier
 
@@ -51,6 +29,18 @@ kubectl apply -f lib/dual-buffer/mysql-deployment.yaml
 ```
 
 This will spin up a `mysql-dual-buffer` pod and service, and automatically initialize the `id_segments` table with a starting block of 1000 IDs for the `default` business tag.
+
+## Flow Diagram
+
+This flowchart explains the dual buffering logic, detailing how the primary buffer serves IDs and how the background thread is triggered to fetch the next block when the threshold is reached.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram illustrates the asynchronous buffer refill process, showing the background thread fetching ID blocks from the database without blocking application requests.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

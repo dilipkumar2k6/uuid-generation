@@ -14,34 +14,14 @@ The 64-bit ID structure remains exactly the same as the standard Snowflake:
 - **10 bits**: Node/Machine ID.
 - **12 bits**: Sequence number.
 
+## Component Diagram
+
+This diagram illustrates the architecture, showing the sidecar's connection to an external etcd cluster for Node ID coordination.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+-----------------------------------------------------------------------+
-|                  Etcd-Coordinated Snowflake Architecture              |
-+-----------------------------------------------------------------------+
-|                                                                       |
-|  +-------------------+                 +---------------------------+  |
-|  |                   |                 |                           |  |
-|  | App/Sidecar       | -- 1. Lease --> |           etcd            |  |
-|  |                   |                 |                           |  |
-|  | (Generates IDs    | -- 2. Claim --> | /uuid-generator/node/5    |  |
-|  |  using Node ID 5) |    Node ID 5    | (Attached to Lease)       |  |
-|  |                   |                 |                           |  |
-|  |                   | -- 3. Keep-  -> |                           |  |
-|  |                   |    Alive        |                           |  |
-|  +-------------------+                 +---------------------------+  |
-|                                                                       |
-|  +---------------------------------------------------------------+    |
-|  |                   64-bit Snowflake ID                         |    |
-|  +---+---------------------------------------+----------+--------+    |
-|  | 1 |                41 bits                | 10 bits  | 12 bits|    |
-|  |bit|               Timestamp               | Node ID  |Sequence|    |
-|  | 0 |        (ms since custom epoch)        | (from    |        |    |
-|  |   |                                       |  etcd)   |        |    |
-|  +---+---------------------------------------+----------+--------+    |
-+-----------------------------------------------------------------------+
-```
 
 ## How it Works
 
@@ -59,6 +39,18 @@ The 64-bit ID structure remains exactly the same as the standard Snowflake:
 - **Etcd Communication**: The C++ code uses `libcurl` to communicate directly with etcd's HTTP/gRPC-Gateway API (v3).
 - **Thread Safety**: The sequence and timestamp are managed using `std::atomic<uint64_t>` to ensure thread-safe, lock-free ID generation.
 - **Clock Skew**: Like the standard Snowflake, this implementation uses a "fail-fast" spin-wait approach if the physical clock moves backwards.
+
+## Flow Diagram
+
+This flowchart details the initialization process of acquiring a lease and claiming a Node ID via etcd, followed by the standard Snowflake generation logic.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram outlines the interaction with etcd during startup to claim a Node ID, the background keep-alive process, and the subsequent ID generation.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 

@@ -9,19 +9,14 @@ Unlike Snowflake-based IDs (which are 64-bit integers composed of a timestamp, n
 The standard string representation is 36 characters long, formatted as 32 hexadecimal digits displayed in five groups separated by hyphens, in the form `8-4-4-4-12`. For example:
 `123e4567-e89b-12d3-a456-426614174000`
 
+## Component Diagram
+
+This diagram shows the sidecar architecture for the UUIDv4 generator.
+
+![Component Diagram](component-diagram.svg)
+
 ## Design
 
-```text
-+-----------------------------------------------------------------------+
-|                          128-bit UUIDv4                               |
-+-----------------------------------+----+--------------------+----+----+
-|              48 bits              | 4  |      12 bits       | 2  | 62 |
-|          Random Data              |bits|    Random Data     |bits|bits|
-|                                   |Ver |                    |Var |Rand|
-|                                   |(4) |                    |(8,9|    |
-|                                   |    |                    | a,b|    |
-+-----------------------------------+----+--------------------+----+----+
-```
 
 ## Implementation Details
 
@@ -31,6 +26,18 @@ The standard string representation is 36 characters long, formatted as 32 hexade
   - The 17th hex character is explicitly set to `8`, `9`, `a`, or `b` (indicating the RFC 4122 variant).
 - **Thread Safety**: Because `std::mt19937_64` is not thread-safe, a `std::mutex` is used to lock the random number generation step. This makes it slightly slower than the lock-free `std::atomic` approach used in the Snowflake variants, but it is necessary for safe concurrent random generation.
 - **String Output**: Because a 128-bit value cannot fit into a standard 64-bit integer, this generator overrides the `next_id_string()` method of the `IdGenerator` interface to return the formatted string directly.
+
+## Flow Diagram
+
+This flowchart details the process of generating a UUIDv4, including acquiring a lock, generating random 64-bit numbers, and setting the specific version and variant bits.
+
+![Flow Diagram](flow-diagram.svg)
+
+## Sequence Diagram
+
+This sequence diagram illustrates the interaction flow, highlighting the thread-safe random number generation and string formatting steps.
+
+![Sequence Diagram](sequence-diagram.svg)
 
 ## Pros and Cons
 
