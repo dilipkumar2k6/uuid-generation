@@ -117,7 +117,6 @@ You can also specify which ID generation algorithm to use by passing the `--id_g
 
 # Run with Python
 ./run.sh --lang python --id_generator_algo DB_AUTO_INC
-```
 
 # Run with Sonyflake
 ./run.sh --id_generator_algo SONYFLAKE
@@ -144,6 +143,6 @@ You can also specify which ID generation algorithm to use by passing the `--id_g
 ./run.sh --id_generator_algo SPANNER_TRUETIME
 ```
 
-## Credit
+# Credit
 
 The entire code and documentation for this project was written with the help of [Gemini](https://gemini.google.com).
