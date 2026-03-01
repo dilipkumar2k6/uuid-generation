@@ -1,0 +1,23 @@
+FROM eclipse-temurin:21-jdk-alpine AS builder
+WORKDIR /app
+
+# Copy the source code
+COPY src/ ./src/
+
+# Download MySQL connector
+RUN wget https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.30/mysql-connector-java-8.0.30.jar -O mysql-connector.jar
+
+# Compile the code
+RUN javac -cp mysql-connector.jar src/main/java/com/uuidgenerator/Main.java src/main/java/com/uuidgenerator/lib/*.java src/main/java/com/uuidgenerator/lib/*/*.java
+
+# Package into a jar (simplified for this example)
+RUN mkdir -p out && \
+    cp mysql-connector.jar out/ && \
+    cd src/main/java && \
+    jar cvf ../../../out/generator.jar com/uuidgenerator/Main.class com/uuidgenerator/lib/*.class com/uuidgenerator/lib/*/*.class
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/out/generator.jar .
+COPY --from=builder /app/out/mysql-connector.jar .
+CMD ["java", "-cp", "generator.jar:mysql-connector.jar", "com.uuidgenerator.Main"]

@@ -1,0 +1,10 @@
+FROM python:3.11-alpine
+WORKDIR /app
+
+# Install dependencies
+RUN pip install mysql-connector-python psutil
+
+# Copy source code
+COPY . .
+
+CMD ["python", "-u", "main.py"]

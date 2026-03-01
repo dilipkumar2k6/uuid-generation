@@ -1,0 +1,13 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy package.json if it existed, otherwise we'll just install what we need
+# COPY package*.json ./
+
+# Install dependencies
+RUN npm init -y && npm install mysql2
+
+# Copy source code
+COPY . .
+
+CMD ["node", "main.js"]

@@ -1,0 +1,16 @@
+FROM golang:1.24-alpine AS builder
+WORKDIR /app
+# Install git for fetching dependencies
+RUN apk add --no-cache git
+COPY . .
+# Initialize go module and download dependencies
+RUN go mod init github.com/dilipkumardk/uuid-generator/src/go/generator
+RUN go get go.etcd.io/etcd/client/v3
+RUN go get github.com/go-sql-driver/mysql
+RUN go mod tidy
+RUN go build -o generator main.go
+
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/generator .
+CMD ["./generator"]
