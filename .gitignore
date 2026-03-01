@@ -1,0 +1,16 @@
+# Binaries
+app
+generator
+snowflake
+kind
+
+# Go
+src/go/generator/generator
+src/go/app/app
+
+# C++
+src/cpp/app
+src/cpp/snowflake
+
+# Kubernetes
+deployment_tmp.yaml
